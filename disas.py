@@ -25,8 +25,7 @@ class Analyzer:
 		"""
 		if target== []:
 			target = self.bytecode
-			if offset == 0:
-				offset = self.pointer
+			offset = self.pointer + offset
 		if size == BYTE:
 			return target[offset:offset+1][0]
 		elif size == WORD:
@@ -52,21 +51,36 @@ class Analyzer:
 		charlist = ["{:0>2x}".format(c)
 				for c in self.bytecode[self.pointer:self.pointer+length]]
 		padding = "  " * (6 - len(charlist))
-		self.pointer += length
+		self.next(length)
 		return "{:0>4x}: {}{}".format(
 				p, "".join(charlist), padding)
+	
+	def next(self, length):
+		self.pointer += length
 
-	def disas(self):
-		c = self.fetch()
-		s = ""
+	def disas(self, sys=-1):
+		c = self.fetch()	# byte code
+		d = ""				# disassemble code
+		s = ""				# result string
 		if c == 0xb8:
-			d = self.fetch(WORD)
+			im = self.fetch(WORD, offset=1)
+			d = "mov ax, {:0>4x}".format(im)
 			s = self.str(3)
+		elif c == 0xcd:
+			im = self.fetch(offset=1)
+			d = "int {}".format(im)
+			s = self.str(2)
+		elif c == 0x01:
+			d = "; sys exit"
+			s = self.str(1)
+		elif c == 0x04:
+			d = "; sys write\n{}  ; arg\n{}  ; arg".format(
+					self.str(2), self.str(2))
+			s = self.str(1)
 		else:
 			s = self.str(1)
-		return "{}  {}".format(
-				s,
-				"foo")
+			d = "?"
+		return "{}  {}".format(s, d)
 
 	def end(self):
 		return self.tsize <= self.pointer
