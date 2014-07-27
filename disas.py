@@ -4,13 +4,14 @@
 import sys, os
 import re
 import argparse
+import abc
 
 HEADER_SIZE = 16
 BYTE	= 1
 WORD	= 2
 DWORD	= 4
 
-class Analyzer:
+class Analyzer(metaclass=abc.ABCMeta):
 	def __init__(self, binary):
 		self.header = binary[0:HEADER_SIZE]
 		self.tsize = self.fetch(2, target=self.header, offset=2)
@@ -26,12 +27,15 @@ class Analyzer:
 		if target== []:
 			target = self.bytecode
 			offset = self.pointer + offset
-		if size == BYTE:
-			return target[offset:offset+1][0]
-		elif size == WORD:
-			return (target[offset] | target[offset+1] << 8)
-		elif size == DWORD:
-			raise NotImplementedError("DWORD fetch")
+		try:
+			if size == BYTE:
+				return target[offset:offset+1][0]
+			elif size == WORD:
+				return (target[offset] | target[offset+1] << 8)
+			elif size == DWORD:
+				raise NotImplementedError("DWORD fetch")
+		except IndexError as e:
+			return None
 
 	def read(self, size=BYTE):
 		"""
@@ -42,6 +46,34 @@ class Analyzer:
 		self.pointer += size
 		return code
 
+	def next(self, length):
+		"""
+		send self.pointer forward
+		"""
+		self.pointer += length
+
+	def end(self):
+		"""
+		check if self.pointer reaches to the end of text section
+		"""
+		return self.tsize <= self.pointer
+
+	def exec(self):
+		""" run analyzer """
+		return self.solve(
+				self.fetch(offset=0),
+				self.fetch(offset=1),
+				self.fetch(offset=2),
+				self.fetch(offset=3))
+
+	@abc.abstractmethod
+	def solve(self, c0, c1, c2, c3):
+		"""
+		override this method to make applicable work in derived class
+		"""
+		pass
+
+class Disassembler(Analyzer):
 	def str(self, length):
 		"""
 		convert byte code to applicable form of str
@@ -54,15 +86,11 @@ class Analyzer:
 		self.next(length)
 		return "{:0>4x}: {}{}".format(
 				p, "".join(charlist), padding)
-	
-	def next(self, length):
-		self.pointer += length
 
-	def disas(self):
-		(c0, c1, c2) = (
-				self.fetch(offset=0),
-				self.fetch(offset=1),
-				self.fetch(offset=2))
+	def solve(self, c0, c1, c2, c3):
+		"""
+		convert byte code to assemble code
+		"""
 		d = ""	# disassemble code
 		s = ""	# result string
 		if c0 == 0xb8:
@@ -163,14 +191,6 @@ class Analyzer:
 			s = self.str(1)
 		return "{}  {}".format(s, d)
 
-	def end(self):
-		return self.tsize <= self.pointer
-
-def disas(binary):
-	analyzer = Analyzer(binary)
-	while not analyzer.end():
-		print(analyzer.disas())
-
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-d", "--disas", action="store_true")
@@ -179,6 +199,8 @@ if __name__ == '__main__':
 
 	with open(args.filename, "rb") as f:
 		if args.disas == True:
-			disas(f.read())
+			disassembler = Disassembler(f.read())
+			while not disassembler.end():
+				print(disassembler.exec())
 		else:
 			raise NotImplementedError("sorry for inconvenience")
