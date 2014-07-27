@@ -63,8 +63,8 @@ class Analyzer:
 				self.fetch(offset=0),
 				self.fetch(offset=1),
 				self.fetch(offset=2))
-		d = ""				# disassemble code
-		s = ""				# result string
+		d = ""	# disassemble code
+		s = ""	# result string
 		if c0 == 0xb8:
 			im = self.fetch(WORD, offset=1)
 			d = "mov ax, {:0>4x}".format(im)
@@ -114,10 +114,24 @@ class Analyzer:
 			im = self.fetch(offset=3)
 			d = "mov byte [bx+{}], {:0>2x}".format(offset, im)
 			s = self.str(4)
+		elif (c0, c1) == (0xc6, 0x06):
+			addr = self.fetch(WORD, offset=2)
+			im = self.fetch(offset=4)
+			d = "mov byte [{:0>4x}], {:0>2x}".format(addr, im)
+			s = self.str(5)
+		elif (c0, c1) == (0xc7, 0x06):
+			addr = self.fetch(WORD, offset=2)
+			im = self.fetch(WORD, offset=4)
+			d = "mov [{:0>4x}], {:0>4x}".format(addr, im)
+			s = self.str(6)
 		elif (c0, c1) == (0xc7, 0x07):
 			im = self.fetch(offset=2)
 			d = "mov [bx], {:0>4x}".format(im)
 			s = self.str(4)
+		elif (c0, c1, c2) == (0xc7, 0x46, 0x00):
+			im = self.fetch(WORD, offset=3)
+			d = "mov [bp], {:0>4x}".format(im)
+			s = self.str(5)
 		elif (c0, c1) == (0xc7, 0x47):
 			offset = self.fetch(offset=2)
 			im = self.fetch(WORD, offset=3)
