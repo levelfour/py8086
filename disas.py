@@ -77,6 +77,16 @@ class Analyzer:
 			im = self.fetch(WORD, offset=1)
 			d = "mov bx, {:0>4x}".format(im)
 			s = self.str(3)
+		elif (c0, c1) == (0x80, 0x2e):
+			addr = self.fetch(WORD, offset=2)
+			im = self.fetch(offset=4)
+			d = "sub byte [{:0>4x}], {:0>2x}".format(addr, im)
+			s = self.str(5)
+		elif (c0, c1) == (0x81, 0x2e):
+			addr = self.fetch(WORD, offset=2)
+			im = self.fetch(WORD, offset=4)
+			d = "sub [{:0>4x}], {:0>4x}".format(addr, im)
+			s = self.str(6)
 		elif (c0, c1) == (0x88, 0x07):
 			d = "mov [bx], al"
 			s = self.str(2)
