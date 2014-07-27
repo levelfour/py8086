@@ -77,13 +77,34 @@ class Analyzer:
 			im = self.fetch(WORD, offset=1)
 			d = "mov bx, {:0>4x}".format(im)
 			s = self.str(3)
+		elif (c0, c1) == (0x88, 0x07):
+			d = "mov [bx], al"
+			s = self.str(2)
+		elif (c0, c1) == (0x88, 0x67):
+			offset = self.fetch(offset=2)
+			d = "mov [bx+{}], ah".format(offset)
+			s = self.str(3)
 		elif (c0, c1) == (0x89, 0x07):
 			d = "mov [bx], ax"
+			s = self.str(2)
+		elif (c0, c1) == (0x89, 0x0f):
+			d = "mov [bx], cx"
+			s = self.str(2)
+		elif (c0, c1) == (0x89, 0x2f):
+			d = "mov [bx], bp"
 			s = self.str(2)
 		elif (c0, c1) == (0x89, 0x4f):
 			offset = self.fetch(offset=2)
 			d = "mov [bx+{}], cx".format(offset)
 			s = self.str(3)
+		elif c0 == 0xb1:
+			im = self.fetch(offset=1)
+			d = "mov cl, {:0>2x}".format(im)
+			s = self.str(2)
+		elif c0 == 0xb5:
+			im = self.fetch(offset=1)
+			d = "mov ch, {:0>2x}".format(im)
+			s = self.str(2)
 		elif (c0, c1) == (0xc6, 0x07):
 			im = self.fetch(offset=2)
 			d = "mov byte [bx], {:0>2x}".format(im)
