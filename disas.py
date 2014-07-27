@@ -58,7 +58,7 @@ class Analyzer:
 	def next(self, length):
 		self.pointer += length
 
-	def disas(self, sys=-1):
+	def disas(self):
 		(c0, c1, c2) = (
 				self.fetch(offset=0),
 				self.fetch(offset=1),
@@ -155,12 +155,12 @@ class Analyzer:
 			d = "; sys exit"
 			s = self.str(1)
 		elif c0 == 0x04:
+			s = self.str(1)
 			d = "; sys write\n{}  ; arg\n{}  ; arg".format(
 					self.str(2), self.str(2))
-			s = self.str(1)
 		else:
-			s = self.str(1)
 			d = "?"
+			s = self.str(1)
 		return "{}  {}".format(s, d)
 
 	def end(self):
