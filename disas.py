@@ -69,9 +69,20 @@ class Analyzer:
 			im = self.fetch(WORD, offset=1)
 			d = "mov ax, {:0>4x}".format(im)
 			s = self.str(3)
+		elif c0 == 0xb9:
+			im = self.fetch(WORD, offset=1)
+			d = "mov cx, {:0>4x}".format(im)
+			s = self.str(3)
 		elif c0 == 0xbb:
 			im = self.fetch(WORD, offset=1)
 			d = "mov bx, {:0>4x}".format(im)
+			s = self.str(3)
+		elif (c0, c1) == (0x89, 0x07):
+			d = "mov [bx], ax"
+			s = self.str(2)
+		elif (c0, c1) == (0x89, 0x4f):
+			offset = self.fetch(offset=2)
+			d = "mov [bx+{}], cx".format(offset)
 			s = self.str(3)
 		elif (c0, c1) == (0xc6, 0x07):
 			im = self.fetch(offset=2)
