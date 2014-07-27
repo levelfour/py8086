@@ -59,31 +59,37 @@ class Analyzer:
 		self.pointer += length
 
 	def disas(self, sys=-1):
-		c = self.fetch()	# byte code
+		(c1, c2, c3) = (
+				self.fetch(offset=0),
+				self.fetch(offset=1),
+				self.fetch(offset=2))
 		d = ""				# disassemble code
 		s = ""				# result string
-		if c == 0xb8:
+		if c1 == 0xb8:
 			im = self.fetch(WORD, offset=1)
 			d = "mov ax, {:0>4x}".format(im)
 			s = self.str(3)
-		elif c == 0xbb:
+		elif c1 == 0xbb:
 			im = self.fetch(WORD, offset=1)
 			d = "mov bx, {:0>4x}".format(im)
 			s = self.str(3)
-		elif c == 0xc7:
-			c = self.fetch(offset=1)
-			if c == 0x07:
-				im = self.fetch(offset=2)
-				d = "mov [bx], {:0>4x}".format(im)
-				s = self.str(4)
-		elif c == 0xcd:
+		elif (c1, c2) == (0xc7, 0x07):
+			im = self.fetch(offset=2)
+			d = "mov [bx], {:0>4x}".format(im)
+			s = self.str(4)
+		elif (c1, c2) == (0xc7, 0x47):
+			offset = self.fetch(offset=2)
+			im = self.fetch(WORD, offset=3)
+			d = "mov [bx+{}], {:0>4x}".format(offset, im)
+			s = self.str(5)
+		elif c1 == 0xcd:
 			im = self.fetch(offset=1)
 			d = "int {}".format(im)
 			s = self.str(2)
-		elif c == 0x01:
+		elif c1 == 0x01:
 			d = "; sys exit"
 			s = self.str(1)
-		elif c == 0x04:
+		elif c1 == 0x04:
 			d = "; sys write\n{}  ; arg\n{}  ; arg".format(
 					self.str(2), self.str(2))
 			s = self.str(1)
